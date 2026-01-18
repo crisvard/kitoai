@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Stripe Integration</title>
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <h1>Teste de Integração Stripe</h1>
+    <button id="testBtn">Testar Função Supabase</button>
+    <div id="results"></div>
+
+    <script>
+        const stripe = Stripe('pk_test_51SfTiJABFcfGgf23KYdDmYt8ZuZYrZcMfvqZSrkT0eGfvnm6BeMrc2K5Ou4WZKuVcy4zqaOwm8dmWOcpCwpdtBnE00CFUO5EH5');
+        
+        document.getElementById('testBtn').addEventListener('click', async () => {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p>Testando...</p>';
+            
+            try {
+                console.log('🔥 [TEST] Iniciando teste...');
+                
+                // Teste 1: health-check
+                console.log('🔥 [TEST] Testando health-check...');
+                const healthResponse = await fetch('https://hedxxbsieoazrmbayzab.supabase.co/functions/v1/health-check', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhlZHh4YnNpZW9henJtYmF5emFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjAxNjQsImV4cCI6MjA2MjkzNjE2NH0.pPjEGJ0gTtLxeGUrkDeuh_7zkQWGbD2liccv8kRPJXw',
+                        'Content-Type': 'application/json',
+                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhlZHh4YnNpZW9henJtYmF5emFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjAxNjQsImV4cCI6MjA2MjkzNjE2NH0.pPjEGJ0gTtLxeGUrkDeuh_7zkQWGbD2liccv8kRPJXw'
+                    }
+                });
+                
+                const healthData = await healthResponse.json();
+                console.log('🔥 [TEST] Health check result:', healthData);
+                
+                // Teste 2: create-stripe-payment-intent
+                console.log('🔥 [TEST] Testando create-stripe-payment-intent...');
+                const stripeResponse = await fetch('https://hedxxbsieoazrmbayzab.supabase.co/functions/v1/create-stripe-payment-intent', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhlZHh4YnNpZW9henJtYmF5emFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjAxNjQsImV4cCI6MjA2MjkzNjE2NH0.pPjEGJ0gTtLxeGUrkDeuh_7zkQWGbD2liccv8kRPJXw',
+                        'Content-Type': 'application/json',
+                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhlZHh4YnNpZW9henJtYmF5emFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjAxNjQsImV4cCI6MjA2MjkzNjE2NH0.pPjEGJ0gTtLxeGUrkDeuh_7zkQWGbD2liccv8kRPJXw'
+                    },
+                    body: JSON.stringify({
+                        planId: 'plan-agendamentos',
+                        amount: 97.00
+                    })
+                });
+                
+                const stripeData = await stripeResponse.json();
+                console.log('🔥 [TEST] Stripe payment intent result:', stripeData);
+                
+                // Exibir resultados
+                results.innerHTML = `
+                    <h3>Resultados dos Testes:</h3>
+                    <h4>Health Check:</h4>
+                    <pre>${JSON.stringify(healthData, null, 2)}</pre>
+                    <h4>Stripe Payment Intent:</h4>
+                    <pre>${JSON.stringify(stripeData, null, 2)}</pre>
+                `;
+                
+                if (stripeData.clientSecret) {
+                    console.log('✅ [TEST] ClientSecret obtido:', stripeData.clientSecret);
+                    
+                    // Teste 3: Confirmar pagamento
+                    const { error } = await stripe.confirmCardPayment(stripeData.clientSecret, {
+                        payment_method: {
+                            card: {
+                                token: 'tok_visa' // Token de teste do Stripe
+                            }
+                        }
+                    });
+                    
+                    if (error) {
+                        console.log('❌ [TEST] Erro no pagamento:', error);
+                        results.innerHTML += `<p style="color: red;">Erro no pagamento: ${error.message}</p>`;
+                    } else {
+                        console.log('✅ [TEST] Pagamento confirmado!');
+                        results.innerHTML += `<p style="color: green;">Pagamento confirmado com sucesso!</p>`;
+                    }
+                }
+                
+            } catch (error) {
+                console.error('❌ [TEST] Erro:', error);
+                results.innerHTML = `<p style="color: red;">Erro: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>

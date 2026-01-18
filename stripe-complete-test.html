@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stripe Integration Funcionando</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>🎯 Teste Completo de Integração Stripe</h1>
+    <button id="testBtn">Testar Integração Completa</button>
+    <div id="results" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+
+    <script>
+        // Configurar Supabase
+        const supabaseUrl = 'https://hedxxbsieoazrmbayzab.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhlZHh4YnNpZW9henJtYmF5emFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczNjAxNjQsImV4cCI6MjA2MjkzNjE2NH0.pPjEGJ0gTtLxeGUrkDeuh_7zkQWGbD2liccv8kRPJXw';
+        
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+        const stripe = Stripe('pk_test_51SfTiJABFcfGgf23KYdDmYt8ZuZYrZcMfvqZSrkT0eGfvnm6BeMrc2K5Ou4WZKuVcy4zqaOwm8dmWOcpCwpdtBnE00CFUO5EH5');
+        
+        document.getElementById('testBtn').addEventListener('click', async () => {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p>🔄 Testando integração completa...</p>';
+            
+            try {
+                console.log('🔥 [COMPLETE TEST] Iniciando teste completo...');
+                
+                // 1. Testar função Stripe diretamente
+                console.log('🔥 [COMPLETE TEST] 1. Testando função create-stripe-payment-intent...');
+                const { data: intentData, error: intentError } = await supabase.functions.invoke('create-stripe-payment-intent', {
+                    body: {
+                        planId: 'plan-agendamentos',
+                        amount: 97.00
+                    }
+                });
+                
+                console.log('🔥 [COMPLETE TEST] Resultado função:', { intentData, intentError });
+                
+                if (intentError) {
+                    throw new Error(`Erro na função: ${intentError.message}`);
+                }
+                
+                if (!intentData?.clientSecret) {
+                    throw new Error('ClientSecret não retornado');
+                }
+                
+                console.log('✅ [COMPLETE TEST] ClientSecret obtido:', intentData.clientSecret);
+                
+                // 2. Criar Payment Element
+                console.log('🔥 [COMPLETE TEST] 2. Criando Payment Element...');
+                const elements = stripe.elements({
+                    clientSecret: intentData.clientSecret,
+                    appearance: {
+                        theme: 'night',
+                        variables: {
+                            colorPrimary: '#c4d82e',
+                        },
+                    },
+                });
+                
+                const paymentElement = elements.create('payment');
+                
+                // 3. Adicionar elemento ao DOM
+                console.log('🔥 [COMPLETE TEST] 3. Adicionando Payment Element ao DOM...');
+                const elementContainer = document.createElement('div');
+                elementContainer.id = 'payment-element';
+                elementContainer.style.margin = '20px 0';
+                results.appendChild(elementContainer);
+                paymentElement.mount('#payment-element');
+                
+                // 4. Botão para confirmar pagamento
+                const confirmBtn = document.createElement('button');
+                confirmBtn.textContent = 'Confirmar Pagamento';
+                confirmBtn.style.padding = '10px 20px';
+                confirmBtn.style.backgroundColor = '#c4d82e';
+                confirmBtn.style.color = 'black';
+                confirmBtn.style.border = 'none';
+                confirmBtn.style.borderRadius = '5px';
+                confirmBtn.style.cursor = 'pointer';
+                confirmBtn.style.fontSize = '16px';
+                confirmBtn.style.margin = '10px 0';
+                
+                results.appendChild(confirmBtn);
+                
+                confirmBtn.addEventListener('click', async () => {
+                    confirmBtn.disabled = true;
+                    confirmBtn.textContent = 'Processando...';
+                    
+                    try {
+                        console.log('🔥 [COMPLETE TEST] 4. Confirmando pagamento...');
+                        
+                        const { error: confirmError } = await stripe.confirmPayment({
+                            elements,
+                            confirmParams: {
+                                return_url: window.location.href,
+                            },
+                            redirect: 'if_required'
+                        });
+                        
+                        if (confirmError) {
+                            console.error('❌ [COMPLETE TEST] Erro no pagamento:', confirmError);
+                            results.innerHTML += `<p style="color: red;">❌ Erro: ${confirmError.message}</p>`;
+                        } else {
+                            console.log('✅ [COMPLETE TEST] Pagamento confirmado!');
+                            results.innerHTML += `<p style="color: green;">✅ Pagamento confirmado com sucesso!</p>`;
+                            results.innerHTML += `<p>📋 PaymentIntent ID: ${intentData.paymentIntentId}</p>`;
+                            results.innerHTML += `<p>🔑 ClientSecret: ${intentData.clientSecret}</p>`;
+                        }
+                        
+                    } catch (error) {
+                        console.error('❌ [COMPLETE TEST] Erro geral:', error);
+                        results.innerHTML += `<p style="color: red;">❌ Erro geral: ${error.message}</p>`;
+                    } finally {
+                        confirmBtn.disabled = false;
+                        confirmBtn.textContent = 'Confirmar Pagamento';
+                    }
+                });
+                
+                // Exibir resultado inicial
+                results.innerHTML = `
+                    <h3>✅ Integração Stripe Funcionando!</h3>
+                    <p><strong>Função Supabase:</strong> ✅ Funcionando</p>
+                    <p><strong>ClientSecret:</strong> ✅ ${intentData.clientSecret}</p>
+                    <p><strong>PaymentIntent ID:</strong> ✅ ${intentData.paymentIntentId}</p>
+                    <hr>
+                    <h4>Formulário de Pagamento:</h4>
+                `;
+                
+            } catch (error) {
+                console.error('❌ [COMPLETE TEST] Erro:', error);
+                results.innerHTML = `<p style="color: red;">❌ Erro: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>

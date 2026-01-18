@@ -1,0 +1,47 @@
+## ⚡ IMPLEMENTAÇÃO RÁPIDA: 2 MINUTOS
+
+Se você está com pressa, siga EXATAMENTE estes 3 passos:
+
+### Passo 1: Copiar (30 segundos)
+```
+Abra: /Kito Expert - Dashboard/COPIAR_COLAR_SQL.sql
+Copie: Tudo (Ctrl+A depois Ctrl+C)
+```
+
+### Passo 2: Colar (30 segundos)
+```
+1. Vá para: https://app.supabase.com
+2. Selecione: Kito Expert
+3. Clique: SQL Editor (lado esquerdo)
+4. Clique: New Query (botão azul)
+5. Cole: (Ctrl+V)
+```
+
+### Passo 3: Executar (30 segundos)
+```
+1. Clique: Run (botão azul ou Cmd+Enter)
+2. Veja: "CREATE POLICY" 3 vezes = ✅ SUCESSO
+3. Feche: SQL Editor
+```
+
+### Passo 4: Testar (30 segundos)
+```
+1. Volte para aplicação
+2. Faça: Logout (se estiver logado)
+3. Faça: Login novamente
+4. Limpe cache: Ctrl+Shift+Delete
+5. Teste: Confirmar um agendamento
+6. ✅ Deve funcionar!
+```
+
+---
+
+## ✅ Pronto!
+
+Se funcionou: **Parabéns!** O problema foi resolvido.
+
+Se não funcionou: Leia `GUIA_CORRECAO_ERRO_403.md` para troubleshooting.
+
+---
+
+**Tempo Total:** ~2 minutos ⚡

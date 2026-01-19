@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useProfessionalAuth } from '../scheduler/contexts/ProfessionalAuthContext';
+import { useSEO } from '../hooks/useSEO';
 
 type LoginMode = 'admin' | 'professional';
 
@@ -13,6 +14,13 @@ const Login = () => {
   const { signIn } = useAuth();
   const { login: professionalLogin } = useProfessionalAuth();
   const navigate = useNavigate();
+
+  // SEO configuration
+  useSEO({
+    title: 'Login - Kito AI Dashboard',
+    description: 'Acesse sua conta no Kito AI - Plataforma completa de vendas com inteligência artificial.',
+    keywords: 'login, Kito AI, dashboard, vendas, IA'
+  });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

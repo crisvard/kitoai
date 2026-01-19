@@ -4,6 +4,7 @@ import { useUserProfile } from '../hooks/useUserProfile';
 import { useAuth } from '../contexts/AuthContext';
 import { usePlans } from '../hooks/usePlans';
 import { supabase } from '../lib/supabase';
+import { useSEO } from '../hooks/useSEO';
 
 interface AccountDashboardProps {
   onBack: () => void;
@@ -16,6 +17,13 @@ function AccountDashboard({ onBack }: AccountDashboardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [personType, setPersonType] = useState<'pf' | 'pj'>('pf');
+
+  // SEO configuration
+  useSEO({
+    title: 'Dashboard - Kito AI',
+    description: 'Gerencie sua conta, planos e configurações no Kito AI - Plataforma completa de vendas com IA.',
+    keywords: 'dashboard, conta, perfil, planos, Kito AI, vendas, IA'
+  });
 
   const [formData, setFormData] = useState({
     // Dados comuns

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
@@ -25,10 +25,12 @@ const DirectPaymentPage: React.FC = () => {
   const stripePromise = useMemo(() => {
     if (stripeKeys?.publishableKey) {
       console.log('🔧 [STRIPE] Initializing Stripe with PRODUCTION key from Supabase secrets');
+      console.log('🔧 [STRIPE] Key starts with:', stripeKeys.publishableKey.substring(0, 10) + '...');
       return loadStripe(stripeKeys.publishableKey, {
         locale: 'pt-BR'
       });
     }
+    console.log('🔧 [STRIPE] Waiting for production keys from Supabase secrets...');
     return null;
   }, [stripeKeys?.publishableKey]);
   const [selectedPlan, setSelectedPlan] = useState<string>('');

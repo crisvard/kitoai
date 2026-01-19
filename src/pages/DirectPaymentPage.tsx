@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { usePlans } from '../hooks/usePlans';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { useStripeKeys } from '../hooks/useStripeKeys';
 import { activatePlan as activatePlanService } from '../lib/services/planService';
 import PaymentDataModal from '../components/PaymentDataModal';
 import PixQRCode from '../components/PixQRCode';

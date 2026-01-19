@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useAuth } from '../contexts/AuthContext';
+import logo from '../assets/logo1.png';
 
 const CompleteRegister = () => {
   const [fullName, setFullName] = useState('');
@@ -286,7 +287,7 @@ const CompleteRegister = () => {
       <header style={{ marginBottom: '30px' }}>
         <a href="http://localhost:5173/" style={{ display: 'block', textDecoration: 'none' }}>
           <img
-            src="/src/assets/logo1.png"
+            src={logo}
             alt="Kito Expert Logo"
             style={{
               width: '240px',

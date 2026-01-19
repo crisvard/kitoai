@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import logo from '../assets/logo1.png';
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -144,7 +145,7 @@ const Register = () => {
       <header style={{ marginBottom: '30px' }}>
         <a href="http://localhost:5173/" style={{ display: 'block', textDecoration: 'none' }}>
           <img
-            src="/src/assets/logo1.png"
+            src={logo}
             alt="Kito Expert Logo"
             style={{
               width: '240px',

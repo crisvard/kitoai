@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Lock, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import logo from '../assets/logo1.png';
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -175,7 +176,7 @@ export default function ResetPasswordPage() {
       <header style={{ marginBottom: '30px' }}>
         <a href="http://localhost:5173/" style={{ display: 'block', textDecoration: 'none' }}>
           <img
-            src="/src/assets/logo1.png"
+            src={logo}
             alt="Kito Expert Logo"
             style={{
               width: '240px',

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useProfessionalAuth } from '../scheduler/contexts/ProfessionalAuthContext';
 import { useSEO } from '../hooks/useSEO';
+import logo from '../assets/logo1.png';
 
 type LoginMode = 'admin' | 'professional';
 
@@ -96,9 +97,9 @@ const Login = () => {
 
       {/* Header */}
       <header style={{ marginBottom: '30px' }}>
-        <a href="http://localhost:5173/" style={{ display: 'block', textDecoration: 'none' }}>
+        <a href="/" style={{ display: 'block', textDecoration: 'none' }}>
           <img
-            src="/src/assets/logo1.png"
+            src={logo}
             alt="Kito Expert Logo"
             style={{
               width: '240px',

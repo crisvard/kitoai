@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Mail, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import logo from '../assets/logo1.png';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -80,7 +81,7 @@ export default function ForgotPasswordPage() {
       <header style={{ marginBottom: '30px' }}>
         <a href="http://localhost:5173/" style={{ display: 'block', textDecoration: 'none' }}>
           <img
-            src="/src/assets/logo1.png"
+            src={logo}
             alt="Kito Expert Logo"
             style={{
               width: '240px',

@@ -11,19 +11,26 @@ import PaymentDataModal from '../components/PaymentDataModal';
 import PixQRCode from '../components/PixQRCode';
 import CreditCardForm from '../components/CreditCardForm';
 
-// Initialize Stripe with Portuguese locale
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_51SfTiJABFcfGgf23KYdDmYt8ZuZYrZcMfvqZSrkT0eGfvnm6BeMrc2K5Ou4WZKuVcy4zqaOwm8dmWOcpCwpdtBnE00CFUO5EH5', {
-  locale: 'pt-BR'
-});
-
 type BillingType = 'PIX' | 'CREDIT_CARD';
 
 const DirectPaymentPage: React.FC = () => {
   const { user } = useAuth();
   const { profile } = useUserProfile();
   const { plans, loading: plansLoading } = usePlans();
+  const { keys: stripeKeys, loading: keysLoading, error: keysError } = useStripeKeys();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  // Create Stripe promise dynamically when keys are available
+  const stripePromise = useMemo(() => {
+    if (stripeKeys?.publishableKey) {
+      console.log('🔧 [STRIPE] Initializing Stripe with PRODUCTION key from Supabase secrets');
+      return loadStripe(stripeKeys.publishableKey, {
+        locale: 'pt-BR'
+      });
+    }
+    return null;
+  }, [stripeKeys?.publishableKey]);
   const [selectedPlan, setSelectedPlan] = useState<string>('');
   const [billingType, setBillingType] = useState<BillingType>('PIX');
   const [creditCardToken, setCreditCardToken] = useState<string>('');

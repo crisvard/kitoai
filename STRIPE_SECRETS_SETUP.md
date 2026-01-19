@@ -6,7 +6,7 @@
 
 ### 1. `STRIPE_PUBLISHABLE_KEY`
 ```
-pk_live_51SfTiJABFcfGgf231n03PL9pKY6Q98L7CDsKrqcKnGCcYWBVTVBiiUJAPHAR5yhImUCjxnxGjWgFy2WamZTeN4h100UrOFkIte
+pk_live_SEU_PUBLISHABLE_KEY_AQUI
 ```
 **⚠️ IMPORTANTE:** Substitua pela sua chave publicável real do Stripe
 

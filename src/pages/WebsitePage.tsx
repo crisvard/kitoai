@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { ArrowLeft, CreditCard, Database, FileText, Github, Globe, Key, LinkIcon, NotebookPen, Plus, Receipt, ShieldCheck, Tag, Trash2, X } from 'lucide-react';
 import { useWebsiteServices, WebsiteService } from '../hooks/useWebsiteServices';
 import { usePlans } from '../hooks/usePlans';
+import { supabase } from '../lib/supabase';
 
 interface WebsitePageProps {
   onBack: () => void;
@@ -14,15 +15,10 @@ const WebsitePage: React.FC<WebsitePageProps> = ({ onBack }) => {
   const [selectedWebsite, setSelectedWebsite] = useState<WebsiteService | null>(null);
   const [detailsTab, setDetailsTab] = useState<'details' | 'notes' | 'payment'>('details');
   const [formData, setFormData] = useState({ site_name: '', segment: '', site_link: '', status: 'paused' });
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
 
-  // Encontrar o plano de website
-  const websitePlan = plans?.find(plan =>
-    plan.name?.toLowerCase().includes('desenvolvimento') ||
-    plan.name?.toLowerCase().includes('website') ||
-    plan.name?.toLowerCase().includes('agente') ||
-    plan.id === 'website' ||
-    plan.id === 'desenvolvimento'
-  );
+  // Encontrar o plano de website — prioriza pelo ID específico
+  const websitePlan = plans?.find((plan: any) => plan.id === 'website');
 
   // Função para formatar preço
   const formatPrice = (price: number) => {
@@ -30,6 +26,77 @@ const WebsitePage: React.FC<WebsitePageProps> = ({ onBack }) => {
       style: 'currency',
       currency: 'BRL'
     }).format(price);
+  };
+
+  const handleVerifyPayment = async () => {
+    if (!selectedWebsite?.payment_id) {
+      alert('ID do pagamento não encontrado para este site.');
+      return;
+    }
+
+    setVerifyingPayment(true);
+
+    try {
+      console.log('🔍 [WEBSITE_VERIFY] Verificando pagamento do site:', selectedWebsite.id);
+
+      // Verificar status do pagamento no Asaas
+      const { data: statusData, error: statusError } = await supabase.functions.invoke('verify-payment-status', {
+        body: { paymentId: selectedWebsite.payment_id }
+      });
+
+      if (statusError) {
+        console.error('❌ [WEBSITE_VERIFY] Erro na verificação:', statusError);
+        alert('Erro ao verificar status do pagamento. Tente novamente.');
+        return;
+      }
+
+      if (statusData.status === 'RECEIVED') {
+        console.log('✅ [WEBSITE_VERIFY] Pagamento confirmado!');
+
+        // Atualizar status na tabela payments se existir
+        const { error: paymentUpdateError } = await supabase
+          .from('payments')
+          .update({
+            status: 'paid',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('external_payment_id', selectedWebsite.payment_id);
+
+        if (paymentUpdateError) {
+          console.warn('⚠️ [WEBSITE_VERIFY] Erro ao atualizar tabela payments:', paymentUpdateError);
+        }
+
+        // Ativar o website
+        const { error: updateError } = await supabase
+          .from('user_websites')
+          .update({
+            status: 'published',
+            activated_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', selectedWebsite.id);
+
+        if (updateError) {
+          console.error('❌ [WEBSITE_VERIFY] Erro ao ativar website:', updateError);
+          alert('Erro ao ativar o site. Tente novamente.');
+          return;
+        }
+
+        // Atualizar o estado local
+        setSelectedWebsite(prev => prev ? { ...prev, status: 'published', activated_at: new Date().toISOString() } : null);
+
+        alert('✅ Pagamento confirmado! Site ativado com sucesso.');
+      } else {
+        console.log('⏳ [WEBSITE_VERIFY] Pagamento ainda pendente:', statusData.status);
+        alert('Pagamento ainda não foi confirmado. Tente novamente em alguns instantes.');
+      }
+
+    } catch (err: any) {
+      console.error('❌ [WEBSITE_VERIFY] Erro ao verificar pagamento:', err);
+      alert('Erro ao verificar status do pagamento.');
+    } finally {
+      setVerifyingPayment(false);
+    }
   };
 
   const handleAddWebsite = async () => {
@@ -594,24 +661,47 @@ function SelectedWebsiteView({
           {detailsTab === 'payment' && (
             <div className="space-y-4">
               {selectedWebsite.status !== 'published' ? (
-                <div className="group relative bg-gradient-to-br from-[#c4d82e]/10 to-transparent rounded-2xl border border-[#c4d82e]/25 overflow-hidden transition-all duration-500 hover:shadow-xl hover:shadow-[#c4d82e]/10">
-                  <div className="relative p-5">
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <div className="text-gray-400 text-[11px] font-bold uppercase">Pagamento</div>
-                        <div className="text-white font-bold">Este site está pendente de pagamento</div>
-                        <div className="text-gray-400 text-sm mt-1">Pagamento único, ativação individual por site.</div>
+                <div className="space-y-4">
+                  <div className="group relative bg-gradient-to-br from-[#c4d82e]/10 to-transparent rounded-2xl border border-[#c4d82e]/25 overflow-hidden transition-all duration-500 hover:shadow-xl hover:shadow-[#c4d82e]/10">
+                    <div className="relative p-5">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <div className="text-gray-400 text-[11px] font-bold uppercase">Pagamento</div>
+                          <div className="text-white font-bold">Este site está pendente de pagamento</div>
+                          <div className="text-gray-400 text-sm mt-1">Pagamento único, ativação individual por site.</div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            window.location.href = `/direct-payment?plan=website&websiteId=${selectedWebsite.id}`;
+                          }}
+                          className="bg-[#c4d82e] text-black px-5 py-3 rounded-lg font-bold hover:bg-[#b5c928] transition-colors"
+                        >
+                          Pagar este site
+                        </button>
                       </div>
-                      <button
-                        onClick={() => {
-                          window.location.href = `/direct-payment?plan=website&websiteId=${selectedWebsite.id}`;
-                        }}
-                        className="bg-[#c4d82e] text-black px-5 py-3 rounded-lg font-bold hover:bg-[#b5c928] transition-colors"
-                      >
-                        Pagar este site
-                      </button>
                     </div>
                   </div>
+
+                  {selectedWebsite.payment_id && (
+                    <div className="group relative bg-gradient-to-br from-blue-500/10 to-transparent rounded-2xl border border-blue-500/25 overflow-hidden transition-all duration-500 hover:shadow-xl hover:shadow-blue-500/10">
+                      <div className="relative p-5">
+                        <div className="flex items-center justify-between gap-4">
+                          <div>
+                            <div className="text-gray-400 text-[11px] font-bold uppercase">Confirmação de Pagamento</div>
+                            <div className="text-white font-bold">Já pagou o PIX?</div>
+                            <div className="text-gray-400 text-sm mt-1">Clique para verificar e ativar automaticamente.</div>
+                          </div>
+                          <button
+                            onClick={handleVerifyPayment}
+                            disabled={verifyingPayment}
+                            className="bg-blue-600 text-white px-5 py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {verifyingPayment ? 'Verificando...' : 'Já Paguei - Verificar e Ativar'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -624,7 +714,7 @@ function SelectedWebsiteView({
                         </div>
                         <div>
                           <div className="text-gray-500 text-[11px] font-bold uppercase">Valor Pago</div>
-                          <div className="text-white font-bold">{websitePlan ? formatPrice(websitePlan.monthly_price) : 'R$ 1.490,00'}</div>
+                          <div className="text-white font-bold">{websitePlan ? formatPrice(websitePlan.price || websitePlan.monthly_price) : 'R$ 149,00'}</div>
                           <div className="text-gray-400 text-xs mt-1">Pagamento único</div>
                         </div>
                       </div>

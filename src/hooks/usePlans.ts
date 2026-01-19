@@ -16,22 +16,36 @@ export interface Plan {
 }
 
 export const usePlans = () => {
+  const classifyPlan = (plan: any) => {
+    const id = (plan.id || '').toString().toLowerCase();
+    const name = (plan.name || '').toString().toLowerCase();
+
+    if (['website', 'desenvolvimento', 'app'].includes(id)) return 'website';
+    if (name.includes('desenvolvimento') || name.includes('website') || name.includes('site') || name.includes('app') || name.includes('agente')) return 'website';
+    if (name.includes('whatsapp') || name.includes('agendamento')) return 'whatsapp';
+    if (name.includes('ligação') || name.includes('ligac') || id.includes('ligacoes')) return 'ligacoes';
+    return 'other';
+  };
+
   const fetchPlans = async () => {
-    console.log('🔍 [usePlans] Buscando planos da tabela plans...');
+    console.log('🔍 [usePlans] Buscando planos ativos na tabela `plans`...');
 
     const { data, error } = await supabase
       .from('plans')
       .select('*')
+      .eq('is_active', true)
       .order('name');
 
     if (error) {
       console.error('❌ [usePlans] Erro ao buscar planos:', error);
-      return getFallbackPlans();
+      const fallback = getFallbackPlans().map(p => ({ ...p, category: classifyPlan(p) }));
+      return fallback;
     }
 
-    console.log(`✅ [usePlans] Encontrados ${data?.length || 0} planos:`, data?.map(p => `${p.id}: ${p.name}`));
-    console.log('📋 [usePlans] Dados completos dos planos:', data);
-    return data || getFallbackPlans();
+    const classified = (data || []).map((p: any) => ({ ...p, category: classifyPlan(p) }));
+
+    console.log(`✅ [usePlans] Encontrados ${classified.length} planos ativos:`, classified.map((p: any) => `${p.id}: ${p.name} (${p.category})`));
+    return classified.length ? classified : getFallbackPlans().map(p => ({ ...p, category: classifyPlan(p) }));
   };
 
   // Cache de 30 minutos

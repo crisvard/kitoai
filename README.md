@@ -27,6 +27,20 @@ npm install
 npm run dev
 ```
 
+## Configuração do Supabase
+
+1. Crie um arquivo `.env.local` (ou `.env`) na raiz do projeto.
+2. Copie os valores a partir de `.env.example` e preencha com os seus dados do Supabase:
+
+```
+VITE_SUPABASE_URL=https://<seu-projeto>.supabase.co
+VITE_SUPABASE_ANON_KEY=<sua-anon-key>
+```
+
+3. Reinicie o servidor de desenvolvimento (`npm run dev`).
+
+Observação: o projeto usa `import.meta.env.VITE_*`, portanto é necessário reiniciar o dev server após alterar variáveis de ambiente.
+
 ## Build
 
 ```bash

@@ -10,6 +10,14 @@ console.log('🔥 [SUPABASE] Configuração carregada:', {
   keyPreview: supabaseAnonKey ? supabaseAnonKey.substring(0, 20) + '...' : 'N/A'
 });
 
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('🔥 [SUPABASE] Variáveis de ambiente ausentes:', {
+    hasUrl: !!supabaseUrl,
+    hasKey: !!supabaseAnonKey
+  });
+  throw new Error('VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY não estão configuradas. Verifique seu .env e reinicie o dev server.');
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-console.log('🔥 [SUPABASE] Cliente criado:', supabase);
+console.log('🔥 [SUPABASE] Cliente criado');

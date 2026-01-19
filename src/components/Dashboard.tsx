@@ -230,9 +230,9 @@ function Dashboard({ onNavigateToAccount, onNavigateToWhatsapp, onNavigateToWhat
   }
 
   const handleConfigure = (id: string) => {
-    // Agente de Desenvolvimento (id '1') - Sempre acessível para websites
+    // Agente de Desenvolvimento (id '1') - Gerenciador de websites
     if (id === '1') {
-      window.location.href = '/websites';
+      window.location.href = '/development';
       return;
     }
     if (id === '2') {

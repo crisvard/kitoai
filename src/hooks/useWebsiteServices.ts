@@ -99,6 +99,105 @@ export function useWebsiteServices() {
     return dbUpdates;
   };
 
+  // Verificar pagamentos PIX pendentes e ativar sites automaticamente
+  const checkPendingPixPayments = async () => {
+    try {
+      console.log('🔍 [PENDING_CHECK] Verificando pagamentos PIX pendentes...');
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Buscar websites com status 'paused' que podem ter pagamentos pendentes
+      const { data: pendingWebsites, error: websitesError } = await supabase
+        .from('user_websites')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'paused')
+        .not('payment_id', 'is', null);
+
+      if (websitesError) {
+        console.error('❌ [PENDING_CHECK] Erro ao buscar websites pendentes:', websitesError);
+        return;
+      }
+
+      if (!pendingWebsites || pendingWebsites.length === 0) {
+        console.log('✅ [PENDING_CHECK] Nenhum website pendente encontrado');
+        return;
+      }
+
+      console.log('📋 [PENDING_CHECK] Websites pendentes encontrados:', pendingWebsites.length);
+
+      // Para cada website pendente, verificar o status do pagamento
+      for (const website of pendingWebsites) {
+        if (!website.payment_id) continue;
+
+        try {
+          console.log('🔍 [PENDING_CHECK] Verificando pagamento:', website.payment_id);
+
+          const { data: statusData, error: statusError } = await supabase.functions.invoke('verify-payment-status', {
+            body: { paymentId: website.payment_id }
+          });
+
+          if (statusError) {
+            console.error('❌ [PENDING_CHECK] Erro ao verificar status:', statusError);
+            continue;
+          }
+
+          if (statusData.status === 'RECEIVED') {
+            console.log('✅ [PENDING_CHECK] Pagamento confirmado! Ativando website:', website.id);
+
+            // Atualizar status na tabela payments se existir
+            const { error: paymentUpdateError } = await supabase
+              .from('payments')
+              .update({
+                status: 'paid',
+                updated_at: new Date().toISOString(),
+              })
+              .eq('external_payment_id', website.payment_id);
+
+            if (paymentUpdateError) {
+              console.warn('⚠️ [PENDING_CHECK] Erro ao atualizar tabela payments:', paymentUpdateError);
+              // Não falhar por causa disso
+            } else {
+              console.log('✅ [PENDING_CHECK] Status do pagamento atualizado na tabela payments');
+            }
+
+            // Ativar o website
+            const { error: updateError } = await supabase
+              .from('user_websites')
+              .update({
+                status: 'published',
+                activated_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', website.id);
+
+            if (updateError) {
+              console.error('❌ [PENDING_CHECK] Erro ao ativar website:', updateError);
+            } else {
+              console.log('✅ [PENDING_CHECK] Website ativado com sucesso:', website.id);
+
+              // Atualizar o estado local
+              setWebsites(prevWebsites =>
+                prevWebsites.map(w =>
+                  w.id === website.id
+                    ? { ...w, status: 'published', activated_at: new Date().toISOString() }
+                    : w
+                )
+              );
+            }
+          } else {
+            console.log('⏳ [PENDING_CHECK] Pagamento ainda pendente:', website.payment_id, statusData.status);
+          }
+        } catch (err) {
+          console.error('❌ [PENDING_CHECK] Erro ao verificar pagamento:', err);
+        }
+      }
+    } catch (err) {
+      console.error('❌ [PENDING_CHECK] Erro geral na verificação:', err);
+    }
+  };
+
   // Fetch all websites for current user
   const fetchWebsites = async () => {
     try {
@@ -273,7 +372,10 @@ export function useWebsiteServices() {
   };
 
   useEffect(() => {
-    fetchWebsites();
+    fetchWebsites().then(() => {
+      // Após carregar os websites, verificar pagamentos pendentes
+      checkPendingPixPayments();
+    });
   }, []);
 
   return {
@@ -285,5 +387,6 @@ export function useWebsiteServices() {
     updateWebsite,
     deleteWebsite,
     getWebsite,
+    checkPendingPixPayments,
   };
 }

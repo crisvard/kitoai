@@ -12,7 +12,7 @@ import PixQRCode from '../components/PixQRCode';
 import CreditCardForm from '../components/CreditCardForm';
 
 // Initialize Stripe with Portuguese locale
-const stripePromise = loadStripe('pk_test_51SfTiJABFcfGgf23KYdDmYt8ZuZYrZcMfvqZSrkT0eGfvnm6BeMrc2K5Ou4WZKuVcy4zqaOwm8dmWOcpCwpdtBnE00CFUO5EH5', {
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_51SfTiJABFcfGgf23KYdDmYt8ZuZYrZcMfvqZSrkT0eGfvnm6BeMrc2K5Ou4WZKuVcy4zqaOwm8dmWOcpCwpdtBnE00CFUO5EH5', {
   locale: 'pt-BR'
 });
 
@@ -33,6 +33,7 @@ const DirectPaymentPage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<'data' | 'payment' | 'processing' | 'stripe_payment'>('data');
   const [pixData, setPixData] = useState<{ qrCodeBase64: string; payload: string; paymentId?: string } | null>(null);
   const [clientSecret, setClientSecret] = useState<string>('');
+  const [pixPollingActive, setPixPollingActive] = useState(false);
 
   const reason = searchParams.get('reason');
   const planParam = searchParams.get('plan'); // Parâmetro para identificar qual plano
@@ -51,6 +52,7 @@ const DirectPaymentPage: React.FC = () => {
     // Se veio parâmetro plan=ligacoes, selecionar plano de ligações
     if (planParam === 'ligacoes') {
       const ligacoesPlan = plans?.find(plan =>
+        (plan as any).category === 'ligacoes' ||
         plan.name?.toLowerCase().includes('ligaç') ||
         plan.name?.toLowerCase().includes('ligac') ||
         plan.id === 'ligacoes' ||
@@ -65,17 +67,36 @@ const DirectPaymentPage: React.FC = () => {
     
     // Se veio parâmetro plan=website, selecionar plano de website/desenvolvimento
     if (planParam === 'website') {
-      const websitePlan = plans?.find(plan =>
-        plan.name?.toLowerCase().includes('desenvolvimento') ||
-        plan.name?.toLowerCase().includes('website') ||
-        plan.name?.toLowerCase().includes('agente') ||
-        plan.id === 'website' ||
-        plan.id === 'desenvolvimento'
-      );
+      console.log('🔍 [PLAN] Procurando plano website. Planos disponíveis:', plans?.map(p => ({ id: p.id, name: p.name, category: (p as any).category, price: p.price, monthly_price: p.monthly_price })));
+
+      // Primeiro tentar encontrar por ID específico "website"
+      let websitePlan = plans?.find(plan => plan.id === 'website');
+
+      // Se não encontrou, tentar por categoria
+      if (!websitePlan) {
+        websitePlan = plans?.find((plan: any) => plan.category === 'website');
+      }
+
+      // Se ainda não encontrou, tentar por nome
+      if (!websitePlan) {
+        websitePlan = plans?.find(plan =>
+          plan.id === 'desenvolvimento' ||
+          plan.id === 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' || // UUID do plano website
+          (plan.name && (plan.name.toLowerCase().includes('desenvolvimento') ||
+                         plan.name.toLowerCase().includes('website') ||
+                         plan.name.toLowerCase().includes('agente') ||
+                         plan.name.toLowerCase().includes('site')))
+        );
+      }
+
+      console.log('🌐 [PLAN] Plano website encontrado:', websitePlan);
+
       if (websitePlan) {
         setSelectedPlan(websitePlan.id);
-        console.log('🌐 Plano de Website selecionado:', websitePlan);
+        console.log('✅ [PLAN] Plano de Website selecionado:', websitePlan);
         return;
+      } else {
+        console.log('❌ [PLAN] Plano website NÃO encontrado, procurando alternativas...');
       }
     }
     
@@ -92,6 +113,52 @@ const DirectPaymentPage: React.FC = () => {
       console.log('❌ Nenhum plano encontrado. Planos disponíveis:', plans);
     }
   }, [plans, planParam]);
+
+  // Polling automático para verificar status do PIX
+  useEffect(() => {
+    if (currentStep === 'processing' && pixData?.paymentId && !pixPollingActive) {
+      console.log('🔄 [POLLING] Iniciando polling automático para PIX...');
+      setPixPollingActive(true);
+
+      const pollInterval = setInterval(async () => {
+        try {
+          console.log('🔍 [POLLING] Verificando status do pagamento PIX...');
+
+          const { data: statusData, error: statusError } = await supabase.functions.invoke('verify-payment-status', {
+            body: { paymentId: pixData.paymentId }
+          });
+
+          if (statusError) {
+            console.error('❌ [POLLING] Erro na verificação:', statusError);
+            return;
+          }
+
+          if (statusData.status === 'RECEIVED') {
+            console.log('✅ [POLLING] Pagamento PIX confirmado automaticamente!');
+
+            // Limpar polling
+            clearInterval(pollInterval);
+            setPixPollingActive(false);
+
+            // Ativar plano e navegar
+            await activatePlan(pixData.paymentId);
+            navigate('/dashboard');
+          } else {
+            console.log('⏳ [POLLING] Pagamento ainda pendente:', statusData.status);
+          }
+        } catch (err) {
+          console.error('❌ [POLLING] Erro no polling:', err);
+        }
+      }, 10000); // Verificar a cada 10 segundos
+
+      // Cleanup function
+      return () => {
+        console.log('🧹 [POLLING] Limpando polling automático...');
+        clearInterval(pollInterval);
+        setPixPollingActive(false);
+      };
+    }
+  }, [currentStep, pixData?.paymentId, pixPollingActive, navigate]);
 
   const handleDataConfirmation = () => {
     setCurrentStep('payment');
@@ -164,6 +231,8 @@ const DirectPaymentPage: React.FC = () => {
         hasPaymentData: !!paymentData,
         hasPaymentError: !!paymentError
       });
+
+      
 
       if (paymentError) {
         console.error('❌ [PIX] Falha na criação do pagamento:', paymentError);
@@ -319,7 +388,7 @@ const DirectPaymentPage: React.FC = () => {
     setError('');
 
     try {
-      const amount = isRenewal && renewalAmount ? parseFloat(renewalAmount) : selectedPlanData.price;
+      const amount = isRenewal && renewalAmount ? parseFloat(renewalAmount) : (selectedPlanData.monthly_price || selectedPlanData.price);
 
       const invokeResult = await supabase.functions.invoke('create-stripe-payment-intent', {
         body: {
@@ -361,11 +430,10 @@ const DirectPaymentPage: React.FC = () => {
       // Determinar qual plano ativar baseado no plano selecionado
       const selectedPlanObj = plans?.find(p => p.id === selectedPlan);
       const isWebsitePlan = selectedPlanObj && (
-        selectedPlanObj.name?.toLowerCase().includes('desenvolvimento') ||
-        selectedPlanObj.name?.toLowerCase().includes('website') ||
-        selectedPlanObj.name?.toLowerCase().includes('agente') ||
         selectedPlan === 'website' ||
-        selectedPlan === 'desenvolvimento'
+        selectedPlan === 'desenvolvimento' ||
+        selectedPlanObj.name?.toLowerCase().includes('desenvolvimento') ||
+        selectedPlanObj.name?.toLowerCase().includes('website')
       );
 
       console.log('💳 [STRIPE] Tipo de plano:', isWebsitePlan ? 'WEBSITE' : 'ASSINATURA', 'Plano:', selectedPlanObj?.name);
@@ -436,11 +504,10 @@ const DirectPaymentPage: React.FC = () => {
     // Determinar qual plano ativar baseado no plano selecionado
     const selectedPlanObj = plans?.find(p => p.id === selectedPlan);
     const isWebsitePlan = selectedPlanObj && (
-      selectedPlanObj.name?.toLowerCase().includes('desenvolvimento') ||
-      selectedPlanObj.name?.toLowerCase().includes('website') ||
-      selectedPlanObj.name?.toLowerCase().includes('agente') ||
       selectedPlan === 'website' ||
-      selectedPlan === 'desenvolvimento'
+      selectedPlan === 'desenvolvimento' ||
+      selectedPlanObj.name?.toLowerCase().includes('desenvolvimento') ||
+      selectedPlanObj.name?.toLowerCase().includes('website')
     );
 
     console.log('📋 [ACTIVATE] Tipo de plano:', isWebsitePlan ? 'WEBSITE' : 'ASSINATURA', 'Plano:', selectedPlanObj?.name);
@@ -600,7 +667,7 @@ const DirectPaymentPage: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-black text-white">
-                      R$ {isRenewal && renewalAmount ? (renewalAmount ?? 0).toFixed(2) : (selectedPlanData.price ?? 0).toFixed(2)}<span className="text-sm font-medium text-gray-400">/mês</span>
+                      R$ {isRenewal && renewalAmount ? (renewalAmount ?? 0).toFixed(2) : ((selectedPlanData.monthly_price || selectedPlanData.price) ?? 0).toFixed(2)}<span className="text-sm font-medium text-gray-400">/mês</span>
                     </div>
                   </div>
                 </div>

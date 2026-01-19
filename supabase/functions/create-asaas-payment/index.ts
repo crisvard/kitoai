@@ -185,6 +185,27 @@ serve(async (req) => {
     const payment = await asaasResponse.json()
     console.log('✅ [CREATE-PAYMENT] Cobrança criada:', payment.id)
 
+    // Salvar dados do pagamento no Supabase
+    console.log('💾 [CREATE-PAYMENT] Salvando dados do pagamento no Supabase...')
+    const { error: paymentInsertError } = await supabaseClient
+      .from('payments')
+      .insert({
+        user_id: user.id,
+        amount: value,
+        currency: 'BRL',
+        payment_method: 'PIX',
+        status: 'pending',
+        external_payment_id: payment.id,
+        description: `${plan.name} - ${isMonthly ? 'Mensal' : 'Anual'}`
+      })
+
+    if (paymentInsertError) {
+      console.error('❌ [CREATE-PAYMENT] Erro ao salvar pagamento no Supabase:', paymentInsertError)
+      // Não falhar o pagamento por causa disso
+    } else {
+      console.log('✅ [CREATE-PAYMENT] Pagamento salvo no Supabase')
+    }
+
     // Buscar dados PIX
     console.log('🔍 [CREATE-PAYMENT] Buscando dados PIX...')
     const pixResponse = await fetch(`https://www.asaas.com/api/v3/payments/${payment.id}/pixQrCode`, {

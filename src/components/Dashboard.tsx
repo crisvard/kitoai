@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import TopBar from './TopBar';
 import ServiceCard from './ServiceCard';
 import ClientInfo from './ClientInfo';
-import { MessageSquare, Phone, Calendar, Code, TrendingUp, Megaphone, BarChart3 } from 'lucide-react';
+import { MessageSquare, Phone, Calendar, Code, TrendingUp, Megaphone, BarChart3, Globe } from 'lucide-react';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useCache } from '../hooks/useCache';
 
@@ -35,9 +35,11 @@ interface DashboardProps {
   onNavigateToAccount: () => void;
   onNavigateToScheduler: () => void;
   onNavigateToFranchises: () => void;
+  onNavigateToWebsites: () => void;
+  onNavigateToLandingPages: () => void;
 }
 
-function Dashboard({ onNavigateToAccount, onNavigateToWhatsapp, onNavigateToWhatsAppSetup, onNavigateToDialer, onNavigateToScheduler, onNavigateToFranchises }: DashboardProps) {
+function Dashboard({ onNavigateToAccount, onNavigateToWhatsapp, onNavigateToWhatsAppSetup, onNavigateToDialer, onNavigateToScheduler, onNavigateToFranchises, onNavigateToWebsites, onNavigateToLandingPages }: DashboardProps) {
   const { profile, loading: profileLoading, error: profileError, refreshProfile } = useUserProfile();
   const { clearUserCache } = useCache();
 
@@ -141,10 +143,10 @@ function Dashboard({ onNavigateToAccount, onNavigateToWhatsapp, onNavigateToWhat
       // OCULTO: Agente Modelo de WhatsApp
       {
         id: '1',
-        name: 'Agente de Desenvolvimento',
-        description: 'Sistema de controle de dados e esteira para desenvolvimento de sites e apps',
+        name: 'Agente Web Developer',
+        description: 'Sistema de controle de dados e esteira para desenvolvimento de sites',
         icon: <Code className="w-8 h-8" />,
-        isActive: true, // Sempre ativo - acesso liberado
+        isActive: true, // Sempre ativo - aceso liberado
       },
       {
         id: '2',
@@ -173,6 +175,13 @@ function Dashboard({ onNavigateToAccount, onNavigateToWhatsapp, onNavigateToWhat
         description: 'Sistema completo de marketing digital e automação de campanhas',
         icon: <BarChart3 className="w-8 h-8" />,
         isActive: false, // Sempre ativo - acesso liberado
+      },
+      {
+        id: '6',
+        name: 'Agente App Developer',
+        description: 'Esteira de desenvolvimento de aplicativos mobile e web',
+        icon: <Code className="w-8 h-8" />,
+        isActive: true, // Sempre ativo - acesso liberado
       },
     ];
     setServicesState(services);
@@ -254,6 +263,11 @@ function Dashboard({ onNavigateToAccount, onNavigateToWhatsapp, onNavigateToWhat
       window.location.href = '/marketing';
       return;
     }
+    if (id === '6') {
+      // Redirecionar para página de landing pages
+      onNavigateToLandingPages();
+      return;
+    }
 
     console.log('Configure service:', id);
   };
@@ -315,8 +329,9 @@ function Dashboard({ onNavigateToAccount, onNavigateToWhatsapp, onNavigateToWhat
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
                 {servicesState.map(service => {
-                  const isContracted = plans.some(plan => plan.serviceIds.includes(service.id) && plan.isContracted) || 
+                  const isContracted = plans.some(plan => plan.serviceIds.includes(service.id) && plan.isContracted) ||
                     service.id === '1' || // Agente de Desenvolvimento sempre liberado
+                    service.id === '6' || // Landing Pages sempre liberado
                     (service.id === '4' && profile?.negociacoes_active) || // Negociações baseado no plano
                     (service.id === '5' && profile?.marketing_active); // Marketing baseado no plano
                   console.log(`Service ${service.id}: isActive=${service.isActive}, isContracted=${isContracted}`);

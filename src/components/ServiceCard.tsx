@@ -1,4 +1,4 @@
-import { Settings, Play, Square, MessageSquare, Code, PhoneIncoming, CandlestickChart, CircleFadingPlus } from 'lucide-react';
+import { Settings, Play, Square, MessageSquare, Code, PhoneIncoming, CandlestickChart, CircleFadingPlus, TabletSmartphone, Terminal } from 'lucide-react';
 
 interface Service {
   id: string;
@@ -10,7 +10,7 @@ interface Service {
 
 interface ServiceCardProps {
   service: Service;
-  onToggle: () => void;
+  onToggle?: () => void;
   onConfigure: () => void;
   isContracted?: boolean;
   setupText?: string;
@@ -49,7 +49,7 @@ function ServiceCard({ service, onToggle, onConfigure, isContracted = false, set
         }`}>
           {/* Modern SVG Icons */}
           {service.id === '1' ? (
-            <Code className="w-10 h-10 animate-bounce" />
+            <Terminal className="w-10 h-10 animate-bounce" />
           ) : service.id === '2' ? (
             <PhoneIncoming className="w-10 h-10 animate-bounce drop-shadow-lg animate-pulse" style={{color: '#25D366'}} />
           ) : service.id === '3' ? (
@@ -72,7 +72,7 @@ function ServiceCard({ service, onToggle, onConfigure, isContracted = false, set
           ) : service.id === '5' ? (
             <CircleFadingPlus className="w-10 h-10 animate-bounce drop-shadow-lg animate-pulse" style={{color: '#8b5cf6'}} />
           ) : service.id === '6' ? (
-            <CandlestickChart className="w-10 h-10 animate-bounce drop-shadow-lg animate-pulse" style={{color: '#fbbf24'}} />
+            <TabletSmartphone className="w-10 h-10 animate-bounce drop-shadow-lg animate-pulse" style={{color: '#c4d82e'}} />
           ) : (
             service.icon
           )}
@@ -87,6 +87,11 @@ function ServiceCard({ service, onToggle, onConfigure, isContracted = false, set
         <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
           {service.description}
         </p>
+        {!service.isActive && (
+          <p className="text-orange-400 text-xs mt-2 font-medium">
+            Em desenvolvimento
+          </p>
+        )}
       </div>
 
       {/* Action buttons */}

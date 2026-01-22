@@ -23,6 +23,7 @@ import SchedulerPage from './pages/SchedulerPage';
 import FranchisePage from './pages/FranchisePage';
 import FranchiseSchedulerPage from './pages/FranchiseSchedulerPage';
 import WebsitePage from './pages/WebsitePage';
+import LandingPage from './pages/LandingPage';
 import MarketingPage from './pages/MarketingPage';
 import NegociacoesPage from './pages/NegociacoesPage';
 import ProfessionalDashboardPage from './scheduler/pages/ProfessionalDashboardPage';
@@ -182,6 +183,18 @@ function AppContent() {
             <PrivateRoute>
               <FranchiseProvider>
                 <WebsitePageWrapper />
+              </FranchiseProvider>
+            </PrivateRoute>
+          </PermissionsProvider>
+        ),
+      },
+      {
+        path: '/landing-pages',
+        element: (
+          <PermissionsProvider>
+            <PrivateRoute>
+              <FranchiseProvider>
+                <LandingPageWrapper />
               </FranchiseProvider>
             </PrivateRoute>
           </PermissionsProvider>
@@ -351,6 +364,10 @@ function DashboardWrapper() {
     navigate('/websites');
   };
 
+  const handleNavigateToLandingPages = () => {
+    navigate('/landing-pages');
+  };
+
   return <Dashboard
     onNavigateToAccount={handleNavigateToAccount}
     onNavigateToWhatsapp={handleNavigateToWhatsapp}
@@ -359,6 +376,7 @@ function DashboardWrapper() {
     onNavigateToScheduler={handleNavigateToScheduler}
     onNavigateToFranchises={handleNavigateToFranchises}
     onNavigateToWebsites={handleNavigateToWebsites}
+    onNavigateToLandingPages={handleNavigateToLandingPages}
   />;
 }
 
@@ -516,6 +534,17 @@ function WebsitePageWrapper() {
   };
 
   return <WebsitePage onBack={handleBack} />;
+}
+
+// Componente wrapper para LandingPage
+function LandingPageWrapper() {
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    navigate('/dashboard');
+  };
+
+  return <LandingPage onBack={handleBack} />;
 }
 
 // Componente wrapper para MarketingPage

@@ -49,6 +49,7 @@ const DirectPaymentPage: React.FC = () => {
   const planParam = searchParams.get('plan'); // Parâmetro para identificar qual plano
   const isRenewal = searchParams.get('renewal') === 'true';
   const renewalAmount = searchParams.get('amount');
+  const landingPageId = searchParams.get('landingPageId'); // ID da landing page para app-developer-plan
 
   // Verificar se dados estão completos
   const hasCompleteData = () => {
@@ -109,7 +110,15 @@ const DirectPaymentPage: React.FC = () => {
         console.log('❌ [PLAN] Plano website NÃO encontrado, procurando alternativas...');
       }
     }
-    
+
+    // Se veio parâmetro plan=app-developer-plan, forçar seleção (plano pode não estar na lista)
+    if (planParam === 'app-developer-plan') {
+      console.log('📱 [PLAN] Parâmetro app-developer-plan detectado, forçando seleção');
+      setSelectedPlan('app-developer-plan');
+      console.log('✅ [PLAN] Plano App Developer forçado como selecionado');
+      return;
+    }
+
     // Padrão: Procurar pelo plano de agendamentos/WhatsApp
     const whatsappPlan = plans?.find(plan =>
       plan.name?.toLowerCase().includes('agendamento') ||
@@ -150,9 +159,15 @@ const DirectPaymentPage: React.FC = () => {
             clearInterval(pollInterval);
             setPixPollingActive(false);
 
-            // Ativar plano e navegar
-            await activatePlan(pixData.paymentId);
-            navigate('/dashboard');
+            // Para app-developer-plan, não ativar automaticamente (tem fluxo próprio)
+            if (selectedPlan === 'app-developer-plan') {
+              console.log('📱 [POLLING] App Developer Plan - redirecionando para dashboard sem ativação automática');
+              navigate('/dashboard');
+            } else {
+              // Ativar plano normalmente para outros planos
+              await activatePlan(pixData.paymentId);
+              navigate('/dashboard');
+            }
           } else {
             console.log('⏳ [POLLING] Pagamento ainda pendente:', statusData.status);
           }
@@ -516,33 +531,36 @@ const DirectPaymentPage: React.FC = () => {
     const isWebsitePlan = selectedPlanObj && (
       selectedPlan === 'website' ||
       selectedPlan === 'desenvolvimento' ||
+      selectedPlan === 'app-developer-plan' ||
       selectedPlanObj.name?.toLowerCase().includes('desenvolvimento') ||
-      selectedPlanObj.name?.toLowerCase().includes('website')
+      selectedPlanObj.name?.toLowerCase().includes('website') ||
+      selectedPlanObj.name?.toLowerCase().includes('app developer')
     );
 
     console.log('📋 [ACTIVATE] Tipo de plano:', isWebsitePlan ? 'WEBSITE' : 'ASSINATURA', 'Plano:', selectedPlanObj?.name);
 
-    // Para planos de website, usar planService (pagamento por serviço)
-    if (isWebsitePlan) {
-      console.log('🌐 [ACTIVATE] Usando planService para website...');
-      
+    // Para planos de website ou app-developer-plan, usar planService (pagamento por serviço)
+    if (isWebsitePlan || selectedPlan === 'app-developer-plan') {
+      console.log('🌐 [ACTIVATE] Usando planService para website/landing page...');
+
       const websiteId = searchParams.get('websiteId');
+      const landingPageId = searchParams.get('landingPageId');
       const websiteName = selectedPlanObj?.name || 'Website';
-      
+
       try {
         await activatePlanService(
           user.id,
           selectedPlan,
           paymentId || '',
           websiteName,
-          websiteId || undefined,
+          selectedPlan === 'app-developer-plan' ? (landingPageId || undefined) : (websiteId || undefined),
           billingType === 'PIX' ? 'pix' : 'stripe'
         );
-        
-        console.log('✅ [ACTIVATE] Website ativado via planService');
+
+        console.log('✅ [ACTIVATE] Website/Landing page ativado via planService');
         return;
       } catch (error) {
-        console.error('❌ [ACTIVATE] Erro ao ativar website:', error);
+        console.error('❌ [ACTIVATE] Erro ao ativar website/landing page:', error);
         throw error;
       }
     }
@@ -677,7 +695,7 @@ const DirectPaymentPage: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-black text-white">
-                      R$ {isRenewal && renewalAmount ? (renewalAmount ?? 0).toFixed(2) : ((selectedPlanData.monthly_price || selectedPlanData.price) ?? 0).toFixed(2)}<span className="text-sm font-medium text-gray-400">/mês</span>
+                      R$ {isRenewal && renewalAmount ? parseFloat(renewalAmount ?? '0').toFixed(2) : parseFloat((selectedPlanData.monthly_price || selectedPlanData.price) ?? '0').toFixed(2)}<span className="text-sm font-medium text-gray-400">/mês</span>
                     </div>
                   </div>
                 </div>

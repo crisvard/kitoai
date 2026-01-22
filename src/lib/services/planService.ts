@@ -34,6 +34,31 @@ export const activatePlan = async (
       return { success: true, type: 'website' };
     }
 
+    // App Developer Plan - ativa landing page existente
+    if (planId === 'app-developer-plan' && websiteId) {
+      console.log('📱 [planService] Ativando landing page para app development...');
+
+      // Atualizar a landing page com os dados do pagamento
+      const { error } = await supabase
+        .from('user_landing_pages')
+        .update({
+          payment_id: paymentId,
+          payment_method: paymentMethod,
+          is_active: true,
+          activation_date: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', websiteId);
+
+      if (error) {
+        console.error('❌ [planService] Erro ao ativar landing page:', error);
+        throw error;
+      }
+
+      console.log('✅ [planService] Landing page ativada com sucesso');
+      return { success: true, type: 'landing_page' };
+    }
+
     // Todos os outros planos - usar Edge Function apropriada
     console.log('💳 [planService] Ativando plano via Edge Function:', planId);
     

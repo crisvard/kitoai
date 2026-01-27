@@ -36,6 +36,7 @@ const DirectPaymentPage: React.FC = () => {
   }, [stripeKeys?.publishableKey]);
   const [selectedPlan, setSelectedPlan] = useState<string>('');
   const [billingType, setBillingType] = useState<BillingType>('PIX');
+  const [installments, setInstallments] = useState<number>(1);
   const [creditCardToken, setCreditCardToken] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
@@ -404,7 +405,7 @@ const DirectPaymentPage: React.FC = () => {
       return;
     }
 
-    if (!selectedPlanData) {
+    if (!selectedPlanData && selectedPlan !== 'app-developer-plan') {
       setError('Aguarde o carregamento dos planos');
       return;
     }
@@ -413,12 +414,13 @@ const DirectPaymentPage: React.FC = () => {
     setError('');
 
     try {
-      const amount = isRenewal && renewalAmount ? parseFloat(renewalAmount) : (selectedPlanData.monthly_price || selectedPlanData.price);
+      const amount = isRenewal && renewalAmount ? parseFloat(renewalAmount) : (selectedPlanData?.monthly_price || selectedPlanData?.price);
 
       const invokeResult = await supabase.functions.invoke('create-stripe-payment-intent', {
         body: {
           planId: selectedPlan,
           amount: amount,
+          installments: installments,
           userId: user?.id
         }
       });
@@ -868,14 +870,37 @@ const DirectPaymentPage: React.FC = () => {
               <div className="space-y-6">
                 <div className="text-center mb-4">
                   <h3 className="text-lg font-bold text-white mb-2">Pagamento com Cartão</h3>
-                  <p className="text-sm text-gray-400">Clique no botão abaixo para iniciar o pagamento</p>
+                  <p className="text-sm text-gray-400">Selecione o número de parcelas e clique no botão abaixo</p>
                 </div>
-                
+
+                {/* Seletor de Parcelas */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Número de Parcelas
+                  </label>
+                  <select
+                    value={installments}
+                    onChange={(e) => setInstallments(Number(e.target.value))}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-[#c4d82e]/50 focus:outline-none transition-colors"
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(num => (
+                      <option key={num} value={num} className="bg-gray-800">
+                        {num}x {selectedPlanData && `R$ ${((selectedPlanData.monthly_price || selectedPlanData.price) / num).toFixed(2)}`}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedPlanData && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      Total: R$ {(selectedPlanData.monthly_price || selectedPlanData.price).toFixed(2)} em {installments}x de R$ {((selectedPlanData.monthly_price || selectedPlanData.price) / installments).toFixed(2)}
+                    </p>
+                  )}
+                </div>
+
                 <button
                   onClick={handleCreditCardPayment}
-                  disabled={loading || !selectedPlanData || !!clientSecret}
+                  disabled={loading || (!selectedPlanData && selectedPlan !== 'app-developer-plan') || !!clientSecret}
                   className={`w-full relative overflow-hidden font-bold py-4 rounded-2xl transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] ${
-                    !loading && selectedPlanData && !clientSecret
+                    !loading && (selectedPlanData || selectedPlan === 'app-developer-plan') && !clientSecret
                       ? 'bg-gradient-to-r from-[#c4d82e] to-[#b5c928] hover:from-[#b5c928] hover:to-[#a6c025] text-black hover:shadow-[#c4d82e]/40'
                       : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                   }`}
@@ -890,7 +915,7 @@ const DirectPaymentPage: React.FC = () => {
 
                 {clientSecret && (
                   <Elements stripe={stripePromise}>
-                    <CreditCardForm clientSecret={clientSecret} onPaymentSuccess={handleStripePaymentSuccess} />
+                    <CreditCardForm clientSecret={clientSecret} onPaymentSuccess={handleStripePaymentSuccess} installments={installments} />
                   </Elements>
                 )}
               </div>

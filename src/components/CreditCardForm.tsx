@@ -4,9 +4,10 @@ import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 interface CreditCardFormProps {
   clientSecret: string;
   onPaymentSuccess: (paymentIntentId: string) => void;
+  installments?: number;
 }
 
-const CreditCardForm: React.FC<CreditCardFormProps> = ({ clientSecret, onPaymentSuccess }) => {
+const CreditCardForm: React.FC<CreditCardFormProps> = ({ clientSecret, onPaymentSuccess, installments = 1 }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
@@ -31,12 +32,30 @@ const CreditCardForm: React.FC<CreditCardFormProps> = ({ clientSecret, onPayment
     }
 
     try {
-      // Confirmar o PaymentIntent no Stripe
-      const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+      // Preparar opções de confirmação
+      const confirmOptions: any = {
         payment_method: {
           card: cardElement,
         }
-      });
+      };
+
+      // Adicionar parcelamento se for mais de 1 parcela
+      if (installments > 1) {
+        confirmOptions.payment_method_options = {
+          card: {
+            installments: {
+              plan: {
+                type: 'fixed_count',
+                count: installments,
+                interval: 'month'
+              }
+            }
+          }
+        };
+      }
+
+      // Confirmar o PaymentIntent no Stripe
+      const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, confirmOptions);
 
       if (confirmError) {
         throw new Error(confirmError.message || 'Erro no pagamento');

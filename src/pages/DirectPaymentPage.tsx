@@ -655,13 +655,15 @@ const DirectPaymentPage: React.FC = () => {
             <p className="text-gray-400">
               {isRenewal
                 ? 'Pague antecipadamente para renovar seu plano e manter o acesso contínuo.'
-                : `Você já utilizou seu período de teste. Contrate agora para continuar usando o ${
-                    planParam === 'ligacoes' 
-                      ? 'Agente de Ligações' 
-                      : planParam === 'website'
-                        ? 'Agente de Desenvolvimento'
-                        : 'Agente WhatsApp'
-                  }.`
+                : planParam === 'app-developer-plan'
+                  ? 'Contrate agora o Plano App Developer para desenvolvimento completo de aplicativos.'
+                  : `Você já utilizou seu período de teste. Contrate agora para continuar usando o ${
+                      planParam === 'ligacoes'
+                        ? 'Agente de Ligações'
+                        : planParam === 'website'
+                          ? 'Agente de Desenvolvimento'
+                          : 'Agente WhatsApp'
+                    }.`
               }
             </p>
             {reason === 'trial_used' && !isRenewal && (
@@ -686,16 +688,31 @@ const DirectPaymentPage: React.FC = () => {
           {/* Plano Selecionado */}
           <div className="mb-6">
             <h3 className="text-xl font-bold text-white mb-6">Plano Selecionado</h3>
-            {selectedPlanData && (
+            {(selectedPlanData || selectedPlan === 'app-developer-plan') && (
               <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-bold text-white text-lg">{selectedPlanData.name}</h4>
-                    <p className="text-gray-400 text-sm">{selectedPlanData.description}</p>
+                    <h4 className="font-bold text-white text-lg">
+                      {selectedPlan === 'app-developer-plan' ? 'Plano App Developer' : selectedPlanData?.name}
+                    </h4>
+                    <p className="text-gray-400 text-sm">
+                      {selectedPlan === 'app-developer-plan'
+                        ? 'Desenvolvimento de aplicativos mobile e web com entrega completa'
+                        : selectedPlanData?.description
+                      }
+                    </p>
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-black text-white">
-                      R$ {isRenewal && renewalAmount ? parseFloat(renewalAmount ?? '0').toFixed(2) : parseFloat((selectedPlanData.monthly_price || selectedPlanData.price) ?? '0').toFixed(2)}<span className="text-sm font-medium text-gray-400">/mês</span>
+                      R$ {selectedPlan === 'app-developer-plan'
+                        ? '7000.00'
+                        : (isRenewal && renewalAmount
+                          ? parseFloat(renewalAmount ?? '0').toFixed(2)
+                          : parseFloat((selectedPlanData?.monthly_price || selectedPlanData?.price) ?? '0').toFixed(2))
+                      }
+                      <span className="text-sm font-medium text-gray-400">
+                        {selectedPlan === 'app-developer-plan' ? ' (único)' : (selectedPlanData?.billing_cycle === 'one_time' ? ' (único)' : '/mês')}
+                      </span>
                     </div>
                   </div>
                 </div>

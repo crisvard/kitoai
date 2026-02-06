@@ -1,0 +1,41 @@
+═══════════════════════════════════════════════════════════════════
+🚨 CHAVES DO STRIPE EXPIRARAM - AÇÃO NECESSÁRIA
+═══════════════════════════════════════════════════════════════════
+
+ERRO:
+  "Expired API Key provided: sk_live_***...2VxBY5"
+  code: "api_key_expired"
+  statusCode: 401
+
+═══════════════════════════════════════════════════════════════════
+✅ SOLUÇÃO - GERAR NOVAS CHAVES
+═══════════════════════════════════════════════════════════════════
+
+1. Acesse o Stripe Dashboard:
+   https://dashboard.stripe.com/apikeys
+
+2. Gere novas chaves:
+   - Clique em "Create secret key" (ou "Reveal test key" para test)
+   - Anote as novas chaves:
+     * Publishable key (pk_live_...)
+     * Secret key (sk_live_...)
+
+3. Atualize as secrets no Supabase:
+   https://supabase.com/dashboard/project/hedxxbsieoazrmbayzab/settings/functions
+   
+   Edite as 2 secrets:
+   - STRIPE_PUBLISHABLE_KEY = nova pk_live_...
+   - STRIPE_SECRET_KEY = nova sk_live_...
+
+4. A STRIPE_WEBHOOK_SECRET pode permanecer a mesma (se não expirou)
+
+═══════════════════════════════════════════════════════════════════
+⚠️  IMPORTANTE
+═══════════════════════════════════════════════════════════════════
+
+- As chaves Stripe expiram por segurança
+- Você pode revogar chaves antigas no dashboard do Stripe
+- Após atualizar, as Edge Functions pegarão as novas automaticamente
+- NÃO precisa fazer redeploy das functions
+
+═══════════════════════════════════════════════════════════════════

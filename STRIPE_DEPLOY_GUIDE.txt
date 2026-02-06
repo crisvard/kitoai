@@ -1,0 +1,153 @@
+╔═══════════════════════════════════════════════════════════════════╗
+║          GUIA COMPLETO - STRIPE EDGE FUNCTIONS & SECRETS          ║
+╔═══════════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════════
+📦 EDGE FUNCTIONS DO STRIPE (5 no total)
+═══════════════════════════════════════════════════════════════════
+
+1️⃣  get-stripe-config
+   📁 Local: /supabase/functions/get-stripe-config/index.ts
+   🎯 Função: Retorna as chaves públicas para o frontend
+   🔑 Usa: STRIPE_PUBLISHABLE_KEY, STRIPE_WEBHOOK_SECRET
+   
+2️⃣  create-stripe-payment-intent
+   📁 Local: /supabase/functions/create-stripe-payment-intent/index.ts
+   🎯 Função: Cria PaymentIntent no Stripe
+   🔑 Usa: STRIPE_SECRET_KEY
+   
+3️⃣  activate-stripe-plan
+   📁 Local: /supabase/functions/activate-stripe-plan/index.ts
+   🎯 Função: Ativa plano após pagamento (Agendamentos/WhatsApp)
+   🔑 Usa: STRIPE_SECRET_KEY
+   
+4️⃣  activate-stripe-ligacoes
+   📁 Local: /supabase/functions/activate-stripe-ligacoes/index.ts
+   🎯 Função: Ativa plano de ligações após pagamento
+   🔑 Usa: STRIPE_SECRET_KEY
+   
+5️⃣  stripe-webhook
+   📁 Local: /supabase/functions/stripe-webhook/index.ts
+   🎯 Função: Recebe notificações do Stripe (backup)
+   🔑 Usa: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
+
+═══════════════════════════════════════════════════════════════════
+🔐 SECRETS QUE VOCÊ DEVE CONFIGURAR (3 no total)
+═══════════════════════════════════════════════════════════════════
+
+🔗 ONDE CONFIGURAR:
+https://supabase.com/dashboard/project/hedxxbsieoazrmbayzab/settings/functions
+Clique na aba "Secrets" → "Add new secret"
+
+┌─────────────────────────────────────────────────────────────────┐
+│ SECRET #1                                                       │
+├─────────────────────────────────────────────────────────────────┤
+│ Name (cole exatamente):                                         │
+│ STRIPE_PUBLISHABLE_KEY                                          │
+│                                                                 │
+│ Value (cole exatamente):                                        │
+│ pk_live_51SfTiJABFcfGgf231n03PL9pKY6Q98L7CDsKrqcKnGCcYWBVTVBii│
+│ UJAPHAR5yhImUCjxnxGjWgFy2WamZTeN4h100UrOFkIte                  │
+│                                                                 │
+│ ℹ️  Chave pública - usada no frontend                          │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ SECRET #2                                                       │
+├─────────────────────────────────────────────────────────────────┤
+│ Name (cole exatamente):                                         │
+│ STRIPE_SECRET_KEY                                               │
+│                                                                 │
+│ Value (cole exatamente):                                        │
+│ sk_live_51SfTiJABFcfGgf23D3U3YCETdVPgzoAu7o5J7nHlMl6U3XRKGRY│
+│ dsEw5bVdLVoC6aWw6mawb4RRAyTAQEcDNnPFc00IB2VxBY5               │
+│                                                                 │
+│ ⚠️  Chave secreta - NUNCA exponha publicamente                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ SECRET #3                                                       │
+├─────────────────────────────────────────────────────────────────┤
+│ Name (cole exatamente):                                         │
+│ STRIPE_WEBHOOK_SECRET                                           │
+│                                                                 │
+│ Value (cole exatamente):                                        │
+│ whsec_2jJPED4hKGOMfFmU96IdFghL23QJf6fB                         │
+│                                                                 │
+│ ℹ️  Secret do webhook - valida eventos do Stripe              │
+└─────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════
+🚀 DEPLOY DAS FUNCTIONS (depois de configurar secrets)
+═══════════════════════════════════════════════════════════════════
+
+OPÇÃO 1 - Via CLI (requer login):
+──────────────────────────────────
+npx supabase login
+npx supabase link --project-ref hedxxbsieoazrmbayzab
+npx supabase functions deploy get-stripe-config
+npx supabase functions deploy create-stripe-payment-intent
+npx supabase functions deploy activate-stripe-plan
+npx supabase functions deploy activate-stripe-ligacoes
+npx supabase functions deploy stripe-webhook
+
+OPÇÃO 2 - Via Dashboard:
+──────────────────────────────────
+1. Acesse: https://supabase.com/dashboard/project/hedxxbsieoazrmbayzab/functions
+2. Clique em cada função
+3. Clique em "Deploy"
+
+OPÇÃO 3 - Deploy automático via Git:
+──────────────────────────────────
+git push origin main
+(Se tiver GitHub Actions configurado)
+
+═══════════════════════════════════════════════════════════════════
+✅ CHECKLIST
+═══════════════════════════════════════════════════════════════════
+
+□ 1. Configurei STRIPE_PUBLISHABLE_KEY no Supabase Dashboard
+□ 2. Configurei STRIPE_SECRET_KEY no Supabase Dashboard
+□ 3. Configurei STRIPE_WEBHOOK_SECRET no Supabase Dashboard
+□ 4. Deploy da função: get-stripe-config
+□ 5. Deploy da função: create-stripe-payment-intent
+□ 6. Deploy da função: activate-stripe-plan
+□ 7. Deploy da função: activate-stripe-ligacoes
+□ 8. Deploy da função: stripe-webhook
+□ 9. Testei pagamento no frontend
+□ 10. Verifiquei logs: "Production keys loaded successfully"
+
+═══════════════════════════════════════════════════════════════════
+🧪 TESTAR SE FUNCIONOU
+═══════════════════════════════════════════════════════════════════
+
+1. Abra seu site
+2. Abra Console do navegador (F12)
+3. Vá para página de pagamento
+4. Procure nos logs:
+
+   ✅ "🔧 [STRIPE-CONFIG] Production keys loaded successfully"
+   ✅ "🔧 [STRIPE-KEYS] Production keys loaded successfully"
+   ✅ "🔧 [STRIPE] Initializing Stripe with PRODUCTION key"
+
+5. Tente fazer um pagamento de teste (R$ 1,00)
+
+═══════════════════════════════════════════════════════════════════
+📞 URLs IMPORTANTES
+═══════════════════════════════════════════════════════════════════
+
+Supabase Dashboard:
+https://supabase.com/dashboard/project/hedxxbsieoazrmbayzab
+
+Secrets Configuration:
+https://supabase.com/dashboard/project/hedxxbsieoazrmbayzab/settings/functions
+
+Functions List:
+https://supabase.com/dashboard/project/hedxxbsieoazrmbayzab/functions
+
+Stripe Dashboard:
+https://dashboard.stripe.com/apikeys
+
+Stripe Webhooks:
+https://dashboard.stripe.com/webhooks
+

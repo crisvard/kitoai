@@ -1,0 +1,106 @@
+═══════════════════════════════════════════════════════════════════
+✅ CORREÇÃO FINAL - PARCELAMENTO BRASIL
+═══════════════════════════════════════════════════════════════════
+
+ERRO ANTERIOR:
+  "payment_method_options[card][installments][plan] cannot be used 
+   when creating a PaymentIntent unless confirm is set to true"
+
+CAUSA:
+  O Stripe não permite especificar o PLANO de parcelamento no momento
+  de CRIAR o PaymentIntent (apenas no momento de CONFIRMAR).
+
+═══════════════════════════════════════════════════════════════════
+🔧 SOLUÇÃO - FLUXO CORRETO
+═══════════════════════════════════════════════════════════════════
+
+BACKEND (create-stripe-payment-intent):
+  ✅ Criação: Apenas HABILITA parcelamento
+  ❌ NÃO especifica número de parcelas
+  
+  payment_method_options: {
+    card: {
+      installments: {
+        enabled: true    // ← SÓ ISSO!
+      }
+    }
+  }
+
+FRONTEND (CreditCardForm.tsx):
+  ✅ Confirmação: ESPECIFICA número de parcelas
+  
+  await stripe.confirmCardPayment(clientSecret, {
+    payment_method_options: {
+      card: {
+        installments: {
+          plan: 5    // ← NÚMERO DE PARCELAS AQUI!
+        }
+      }
+    }
+  })
+
+═══════════════════════════════════════════════════════════════════
+✅ MUDANÇAS APLICADAS
+═══════════════════════════════════════════════════════════════════
+
+1. Backend (Edge Function):
+   - Removido: plan { count, interval, type }
+   - Mantido: installments { enabled: true }
+
+2. Frontend (React):
+   - Removido: plan { type, count, interval }  
+   - Mantido: installments { plan: number }
+
+3. Deploy:
+   - ✅ create-stripe-payment-intent v52 deployada
+   - ✅ Frontend commitado
+
+═══════════════════════════════════════════════════════════════════
+🎯 FLUXO COMPLETO AGORA
+═══════════════════════════════════════════════════════════════════
+
+1. Frontend chama create-stripe-payment-intent
+   ↓
+2. Backend cria PaymentIntent com installments HABILITADO
+   ↓
+3. Backend retorna client_secret
+   ↓
+4. Frontend mostra formulário de cartão
+   ↓
+5. Usuário preenche dados e confirma
+   ↓
+6. Frontend confirma com stripe.confirmCardPayment()
+   - AQUI especifica número de parcelas (plan: 5)
+   ↓
+7. Stripe processa parcelamento
+   ↓
+8. Frontend chama activate-stripe-plan
+
+═══════════════════════════════════════════════════════════════════
+🧪 TESTE AGORA
+═══════════════════════════════════════════════════════════════════
+
+1. Recarregue a página (Ctrl+Shift+R)
+2. Escolha 2x, 5x, 10x ou 12x parcelas
+3. Use cartão teste: 4242 4242 4242 4242
+4. CVC: 123, Data: 12/34
+5. Confirme o pagamento
+6. Deve funcionar! ✅
+
+═══════════════════════════════════════════════════════════════════
+⚠️  LEMBRETE FINAL
+═══════════════════════════════════════════════════════════════════
+
+CONFIGURE AS CHAVES VÁLIDAS NO SUPABASE:
+  
+  1. Stripe Dashboard: https://dashboard.stripe.com/apikeys
+     - Pegue pk_live_... e sk_live_...
+  
+  2. Supabase Dashboard: 
+     https://supabase.com/dashboard/project/hedxxbsieoazrmbayzab/settings/functions
+     - Configure STRIPE_PUBLISHABLE_KEY
+     - Configure STRIPE_SECRET_KEY
+
+SEM CHAVES VÁLIDAS O PAGAMENTO NÃO FUNCIONARÁ!
+
+═══════════════════════════════════════════════════════════════════

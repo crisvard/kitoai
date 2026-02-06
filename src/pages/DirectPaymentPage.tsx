@@ -22,16 +22,18 @@ const DirectPaymentPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Create Stripe promise dynamically when keys are available
+  // Create Stripe promise dynamically when keys are available - NO FALLBACK, ONLY PRODUCTION
   const stripePromise = useMemo(() => {
     if (stripeKeys?.publishableKey) {
       console.log('🔧 [STRIPE] Initializing Stripe with PRODUCTION key from Supabase secrets');
       console.log('🔧 [STRIPE] Key starts with:', stripeKeys.publishableKey.substring(0, 10) + '...');
+      console.log('🔧 [STRIPE] NO FALLBACK - Using ONLY production keys from secrets');
       return loadStripe(stripeKeys.publishableKey, {
         locale: 'pt-BR'
       });
     }
-    console.log('🔧 [STRIPE] Waiting for production keys from Supabase secrets...');
+    console.log('⏳ [STRIPE] Waiting for production keys from Supabase secrets...');
+    console.log('⏳ [STRIPE] Configure secrets in: Supabase Dashboard > Settings > Edge Functions > Secrets');
     return null;
   }, [stripeKeys?.publishableKey]);
   const [selectedPlan, setSelectedPlan] = useState<string>('');

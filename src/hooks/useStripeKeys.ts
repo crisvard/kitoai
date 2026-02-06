@@ -48,21 +48,25 @@ export const useStripeKeys = () => {
 
 async function fetchStripeKeys(): Promise<StripeKeys> {
   console.log('🔧 [STRIPE-KEYS] Fetching PRODUCTION Stripe keys from Supabase Edge Function...');
+  console.log('🔧 [STRIPE-KEYS] NO FALLBACK - Only secrets from Supabase');
 
   const { data, error } = await supabase.functions.invoke('get-stripe-config');
 
   if (error) {
-    console.error('🔧 [STRIPE-KEYS] Error fetching production keys:', error);
-    throw new Error(error.message);
+    console.error('❌ [STRIPE-KEYS] Error fetching production keys:', error);
+    console.error('❌ [STRIPE-KEYS] Configure secrets in: Supabase Dashboard > Settings > Edge Functions > Secrets');
+    throw new Error(`Failed to fetch Stripe keys: ${error.message}`);
   }
 
   if (!data?.publishableKey) {
-    console.error('🔧 [STRIPE-KEYS] No publishable key received from production secrets');
-    throw new Error('Stripe publishable key not found in production secrets');
+    console.error('❌ [STRIPE-KEYS] No publishable key received from production secrets');
+    console.error('❌ [STRIPE-KEYS] REQUIRED SECRETS: STRIPE_PUBLISHABLE_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET');
+    console.error('❌ [STRIPE-KEYS] Configure at: https://supabase.com/dashboard/project/hedxxbsieoazrmbayzab/settings/functions');
+    throw new Error('Stripe keys not configured - Configure secrets in Supabase Dashboard');
   }
 
-  console.log('🔧 [STRIPE-KEYS] Production keys loaded successfully');
-  console.log('🔧 [STRIPE-KEYS] Using PRODUCTION mode - no test keys');
+  console.log('✅ [STRIPE-KEYS] Production keys loaded successfully');
+  console.log('✅ [STRIPE-KEYS] Using PRODUCTION mode ONLY - No test keys, no fallbacks');
 
   return data;
 }

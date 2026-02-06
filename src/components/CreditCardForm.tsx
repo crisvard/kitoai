@@ -44,11 +44,7 @@ const CreditCardForm: React.FC<CreditCardFormProps> = ({ clientSecret, onPayment
         confirmOptions.payment_method_options = {
           card: {
             installments: {
-              plan: {
-                type: 'fixed_count',
-                count: installments,
-                interval: 'month'
-              }
+              plan: installments
             }
           }
         };

@@ -1,4 +1,4 @@
-addimport { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 console.log("🔧 [STRIPE-CONFIG] Function loaded")
 
@@ -16,16 +16,19 @@ serve(async (req) => {
   try {
     console.log("🔧 [STRIPE-CONFIG] Getting PRODUCTION Stripe keys from secrets")
 
-    // Get Stripe keys from environment variables (Supabase secrets)
+    // Get Stripe keys APENAS from environment variables (Supabase secrets) - NO FALLBACK
     const publishableKey = Deno.env.get('STRIPE_PUBLISHABLE_KEY')
     const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')
+    const secretKey = Deno.env.get('STRIPE_SECRET_KEY')
 
-    if (!publishableKey) {
-      console.error("🔧 [STRIPE-CONFIG] Missing STRIPE_PUBLISHABLE_KEY in production secrets")
+    if (!publishableKey || !secretKey) {
+      console.error("🔧 [STRIPE-CONFIG] Missing Stripe keys in production secrets")
+      console.error("🔧 [STRIPE-CONFIG] Configure in: Supabase Dashboard > Settings > Edge Functions > Secrets")
       return new Response(
         JSON.stringify({
-          error: 'Stripe publishable key not configured in production secrets',
-          details: 'Configure STRIPE_PUBLISHABLE_KEY in Supabase Edge Functions secrets'
+          error: 'Stripe keys not configured',
+          required: ['STRIPE_PUBLISHABLE_KEY', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'],
+          details: 'Configure all secrets in Supabase Dashboard > Settings > Edge Functions > Secrets'
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )

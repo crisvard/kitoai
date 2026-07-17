@@ -1,0 +1,75 @@
+═══════════════════════════════════════════════════════════════════
+🚨 CHAVE INVÁLIDA - NÃO É DO STRIPE
+═══════════════════════════════════════════════════════════════════
+
+ERRO ATUAL:
+  "Invalid API Key provided: mk_1Sxj0***************6ZOp"
+  statusCode: 401
+
+PROBLEMA:
+  ❌ Chave começa com "mk_" - isso NÃO existe no Stripe!
+
+═══════════════════════════════════════════════════════════════════
+✅ CHAVES VÁLIDAS DO STRIPE
+═══════════════════════════════════════════════════════════════════
+
+Chaves do Stripe SEMPRE começam com:
+
+PRODUCTION (LIVE):
+  ✅ pk_live_...  (Publishable Key - 107 caracteres)
+  ✅ sk_live_...  (Secret Key - 107 caracteres)
+  
+TEST:
+  ✅ pk_test_...  (Publishable Key - 107 caracteres)
+  ✅ sk_test_...  (Secret Key - 107 caracteres)
+
+WEBHOOK:
+  ✅ whsec_...    (Webhook Secret - variável)
+
+INVÁLIDO (NÃO USE):
+  ❌ mk_...       ← ISSO NÃO É DO STRIPE!
+  ❌ rk_...       ← Token restrito (não funciona para API)
+  ❌ sk_...       ← Incompleto (precisa ser sk_live_ ou sk_test_)
+
+═══════════════════════════════════════════════════════════════════
+🔧 SOLUÇÃO - PEGUE AS CHAVES CORRETAS
+═══════════════════════════════════════════════════════════════════
+
+1. Acesse: https://dashboard.stripe.com/apikeys
+
+2. Procure por:
+   
+   📦 Standard keys
+   ├─ Publishable key
+   │  └─ pk_live_51...  (clique "Reveal live key")
+   │
+   └─ Secret key 
+      └─ sk_live_51...  (clique "Create secret key" ou "Reveal")
+
+3. COPIE as chaves EXATAMENTE como aparecem:
+   - Não invente
+   - Não edite
+   - Não use "restricted keys" (rk_)
+   - Não use tokens temporários
+
+4. Cole no Supabase:
+   https://supabase.com/dashboard/project/hedxxbsieoazrmbayzab/settings/functions
+   
+   STRIPE_PUBLISHABLE_KEY = pk_live_51... (107 caracteres)
+   STRIPE_SECRET_KEY = sk_live_51...      (107 caracteres)
+
+═══════════════════════════════════════════════════════════════════
+⚠️  ATENÇÃO
+═══════════════════════════════════════════════════════════════════
+
+- NÃO use chaves que começam com "mk_"
+- NÃO use "Restricted keys" (começam com rk_)
+- USE apenas "Standard keys" do Stripe Dashboard
+- As chaves devem ter ~107 caracteres cada
+
+Se você está vendo "mk_", provavelmente:
+  • Pegou de outro serviço (não é Stripe)
+  • Copiou um token temporário
+  • Usou uma chave de integração antiga/deprecated
+
+═══════════════════════════════════════════════════════════════════

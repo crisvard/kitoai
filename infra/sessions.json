@@ -1,0 +1,14 @@
+{
+  "test-nav-02": {
+    "navId": "test-nav-02",
+    "userId": "local-user",
+    "vmName": "localhost",
+    "vmIp": "127.0.0.1",
+    "wsPort": 6080,
+    "token": "4a7ad490725b0bcb22bc98c629dedca3",
+    "display": 10,
+    "vncPort": 5910,
+    "status": "active",
+    "startedAt": 1783723741081
+  }
+}

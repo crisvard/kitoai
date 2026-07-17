@@ -1,0 +1,159 @@
+{
+  "name": "check_availability_calcom",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "check-availability",
+        "responseMode": "onReceived",
+        "responseData": "firstEntryJson"
+      },
+      "id": "webhook_node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.cal.com/v2/slots",
+        "authentication": "none",
+        "method": "GET",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "eventTypeSlug",
+              "value": "demo-app-academia"
+            },
+            {
+              "name": "start",
+              "value": "={{ $node.Webhook.json.body.arguments.date }}T00:00:00Z"
+            },
+            {
+              "name": "end",
+              "value": "={{ $node.Webhook.json.body.arguments.date }}T23:59:59.999Z"
+            },
+            {
+              "name": "timeZone",
+              "value": "America/Sao_Paulo"
+            },
+            {
+              "name": "username",
+              "value": "cristopher-ramos-vieira-kitoexpert"
+            }
+          ]
+        },
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.CAL_COM_API_KEY }}"
+            },
+            {
+              "name": "cal-api-version",
+              "value": "2024-09-04"
+            }
+          ]
+        }
+      },
+      "id": "http_request_node",
+      "name": "Fetch Cal.com Slots",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst slots = [];\n\nif (response && response.data) {\n  Object.entries(response.data).forEach(([date, timeSlots]) => {\n    if (Array.isArray(timeSlots)) {\n      timeSlots.forEach(slot => {\n        const time = slot.time || slot.start;\n        if (time) {\n          const dt = new Date(time);\n          const brTime = dt.toLocaleTimeString('pt-BR', {\n            timeZone: 'America/Sao_Paulo',\n            hour: '2-digit',\n            minute: '2-digit'\n          });\n          slots.push(brTime);\n        }\n      });\n    }\n  });\n}\n\nconst date = $node.Webhook.json.body.arguments.date;\nlet text = '';\nif (slots.length === 0) {\n  text = `Não há horários disponíveis para ${date}. Sugira ao cliente verificar outro dia.`;\n} else {\n  text = `Horários disponíveis para ${date}: ${slots.join(', ')}. Qual você prefere?`;\n}\n\nreturn [{ json: { text, slots } }];"
+      },
+      "id": "code_node",
+      "name": "Process Slots",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SUPABASE_URL }}/functions/v1/n8n-callback",
+        "authentication": "none",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "callId",
+              "value": "={{ $node.Webhook.json.body.callId }}"
+            },
+            {
+              "name": "toolCallId",
+              "value": "={{ $node.Webhook.json.body.toolCallId }}"
+            },
+            {
+              "name": "functionName",
+              "value": "check_availability"
+            },
+            {
+              "name": "result",
+              "value": "={{ $node['Process Slots'].json.text }}"
+            },
+            {
+              "name": "agentId",
+              "value": "={{ $node.Webhook.json.body.agentId }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json"
+      },
+      "id": "callback_node",
+      "name": "Callback Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Cal.com Slots",
+            "branch": 0,
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Cal.com Slots": {
+      "main": [
+        [
+          {
+            "node": "Process Slots",
+            "branch": 0,
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Slots": {
+      "main": [
+        [
+          {
+            "node": "Callback Supabase",
+            "branch": 0,
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

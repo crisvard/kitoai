@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Copy Extension</title>
+  <style>
+    body {
+      width: 360px;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 13px;
+      color: #e2e8f0;
+      background: #0d1117;
+    }
+    .header {
+      background: #161b22;
+      padding: 14px;
+      border-bottom: 1px solid #1e2329;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #a855f7;
+      box-shadow: 0 0 8px #a855f7;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .title {
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #e2e8f0;
+    }
+    .subtitle {
+      font-size: 10px;
+      color: #4a5568;
+      margin-top: 2px;
+    }
+    .body {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 6px;
+      border: none;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: filter 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    button:hover:not(:disabled) {
+      filter: brightness(1.15);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-collector {
+      background: #00e676;
+      color: #0d1117;
+    }
+    .btn-bot {
+      background: #a855f7;
+      color: #fff;
+    }
+    .status {
+      background: #0d1117;
+      border: 1px solid #1e2329;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 10px;
+      line-height: 1.5;
+      color: #4a5568;
+      min-height: 32px;
+      text-align: center;
+    }
+    .footer {
+      padding: 10px 14px;
+      border-top: 1px solid #1e2329;
+      font-size: 9px;
+      color: #2d3748;
+      text-align: center;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #1e2329;
+      font-size: 9px;
+      color: #4a5568;
+      margin: 0 2px;
+    }
+  </style>
+</head>
+<body>
+    <div class="header">
+      <span class="dot"></span>
+      <div>
+        <div class="title">Copy Extension</div>
+        <div class="subtitle">Copie e cole no console da aba</div>
+      </div>
+    </div>
+
+    <div class="body">
+      <button id="btnCollector" class="btn-collector">
+        📋 Copiar Script 1
+      </button>
+      <button id="btnBot" class="btn-bot">
+        📋 Copiar Script 2
+      </button>
+      <div class="status" id="status">Clique em um botão para copiar.</div>
+    </div>
+
+    <div class="footer">
+      <span class="badge">Ordem:</span>
+      <span class="badge">1. Script 1</span>
+      <span class="badge">2. Script 2</span>
+    </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

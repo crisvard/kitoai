@@ -1,0 +1,56 @@
+═══════════════════════════════════════════════════════════════════
+🎯 TESTE O PAGAMENTO AGORA
+═══════════════════════════════════════════════════════════════════
+
+Você configurou as chaves no Supabase ✅
+Agora vamos testar:
+
+═══════════════════════════════════════════════════════════════════
+📋 PASSOS PARA TESTAR
+═══════════════════════════════════════════════════════════════════
+
+1. RECARREGUE a página de pagamento (Ctrl+Shift+R)
+
+2. Selecione um PLANO
+
+3. Escolha PARCELAMENTO (2x, 5x, 10x ou 12x)
+
+4. Preencha o cartão de TESTE:
+   Número: 4242 4242 4242 4242
+   CVC: 123
+   Data: 12/34
+   Nome: Qualquer nome
+
+5. Clique em PAGAR
+
+═══════════════════════════════════════════════════════════════════
+✅ O QUE DEVE ACONTECER
+═══════════════════════════════════════════════════════════════════
+
+1. PaymentIntent criado com installments habilitado
+2. Formulário de cartão aparece
+3. Você preenche os dados
+4. Confirmação do pagamento com número de parcelas
+5. Sucesso! Plano ativado
+
+═══════════════════════════════════════════════════════════════════
+❌ SE DER ERRO
+═══════════════════════════════════════════════════════════════════
+
+Me envie:
+1. Erro do console (F12 > Console)
+2. Logs do Supabase Functions
+3. Screenshot se possível
+
+═══════════════════════════════════════════════════════════════════
+🔍 PARA VER LOGS DO SUPABASE
+═══════════════════════════════════════════════════════════════════
+
+https://supabase.com/dashboard/project/hedxxbsieoazrmbayzab/logs/edge-functions
+
+Procure por:
+- [STRIPE] Criando PaymentIntent
+- [STRIPE] PaymentIntent criado
+- Mensagens de erro
+
+═══════════════════════════════════════════════════════════════════

@@ -1,0 +1,75 @@
+═══════════════════════════════════════════════════════════════════
+✅ CORREÇÃO APLICADA - PARCELAMENTO STRIPE
+═══════════════════════════════════════════════════════════════════
+
+ERRO ANTERIOR:
+  "PaymentIntents cannot be confirmed with an installment plan 
+   unless payment_method_options[card][installments][enabled] 
+   is set to true."
+
+CAUSA:
+  A function create-stripe-payment-intent estava criando o 
+  PaymentIntent SEM habilitar a opção de parcelamento, mesmo 
+  quando installments > 1.
+
+═══════════════════════════════════════════════════════════════════
+🔧 SOLUÇÃO IMPLEMENTADA
+═══════════════════════════════════════════════════════════════════
+
+Adicionado à function create-stripe-payment-intent:
+
+```typescript
+// Se tiver parcelamento, habilitar installments
+if (installments > 1) {
+  paymentIntentData.payment_method_options = {
+    card: {
+      installments: {
+        enabled: true,
+        plan: {
+          count: installments,
+          type: 'fixed_count',
+        },
+      },
+    },
+  };
+}
+```
+
+═══════════════════════════════════════════════════════════════════
+✅ DEPLOY REALIZADO
+═══════════════════════════════════════════════════════════════════
+
+Function: create-stripe-payment-intent
+Status: ✅ Deployada com sucesso
+Tamanho: 101.7kB
+Link: https://supabase.com/dashboard/project/hedxxbsieoazrmbayzab/functions
+
+═══════════════════════════════════════════════════════════════════
+🎯 COMPORTAMENTO AGORA
+═══════════════════════════════════════════════════════════════════
+
+SEM parcelamento (installments = 1):
+  - PaymentIntent criado normalmente
+  - Sem payment_method_options
+
+COM parcelamento (installments > 1):
+  - PaymentIntent criado com installments habilitado
+  - Stripe divide valor automaticamente
+  - Frontend mostra valor de cada parcela
+  - Aprovado: pode ter até 12 parcelas
+
+═══════════════════════════════════════════════════════════════════
+✅ TESTE AGORA
+═══════════════════════════════════════════════════════════════════
+
+1. Acesse a página de pagamento
+2. Escolha parcelamento (2x, 3x, etc)
+3. Preencha dados do cartão de teste:
+   - Número: 4242 4242 4242 4242
+   - CVC: 123
+   - Data: 12/34
+4. Confirme o pagamento
+
+Deve funcionar sem erros de installments agora!
+
+═══════════════════════════════════════════════════════════════════

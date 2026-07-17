@@ -1,0 +1,162 @@
+{
+  "name": "book_appointment_calcom",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "book-appointment",
+        "responseMode": "onReceived",
+        "responseData": "firstEntryJson"
+      },
+      "id": "webhook_node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.cal.com/v2/bookings",
+        "authentication": "none",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.CAL_COM_API_KEY }}"
+            },
+            {
+              "name": "cal-api-version",
+              "value": "2024-09-04"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "start",
+              "value": "={{ new Date($node.Webhook.json.body.arguments.datetime).toISOString() }}"
+            },
+            {
+              "name": "eventTypeSlug",
+              "value": "demo-app-academia"
+            },
+            {
+              "name": "username",
+              "value": "cristopher-ramos-vieira-kitoexpert"
+            },
+            {
+              "name": "attendee",
+              "value": "={{ { name: $node.Webhook.json.body.arguments.name, email: $node.Webhook.json.body.arguments.email || 'agendamento@kitoexpert.ai', timeZone: 'America/Sao_Paulo' } }}"
+            }
+          ]
+        }
+      },
+      "id": "http_request_node",
+      "name": "Create Cal.com Booking",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst name = $node.Webhook.json.body.arguments.name;\nconst datetime = $node.Webhook.json.body.arguments.datetime;\n\nlet text = '';\nif (response && (response.data?.id || response.id)) {\n  text = `✅ Agendamento confirmado! ${name}, sua reunião está marcada para ${datetime}. Você receberá um email de confirmação.`;\n} else {\n  text = `Erro ao agendar. Tente novamente ou escolha outro horário.`;\n}\n\nreturn [{ json: { text } }];"
+      },
+      "id": "code_node",
+      "name": "Process Booking Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SUPABASE_URL }}/functions/v1/n8n-callback",
+        "authentication": "none",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "callId",
+              "value": "={{ $node.Webhook.json.body.callId }}"
+            },
+            {
+              "name": "toolCallId",
+              "value": "={{ $node.Webhook.json.body.toolCallId }}"
+            },
+            {
+              "name": "functionName",
+              "value": "book_appointment"
+            },
+            {
+              "name": "result",
+              "value": "={{ $node['Process Booking Response'].json.text }}"
+            },
+            {
+              "name": "agentId",
+              "value": "={{ $node.Webhook.json.body.agentId }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json"
+      },
+      "id": "callback_node",
+      "name": "Callback Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Create Cal.com Booking",
+            "branch": 0,
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Cal.com Booking": {
+      "main": [
+        [
+          {
+            "node": "Process Booking Response",
+            "branch": 0,
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Booking Response": {
+      "main": [
+        [
+          {
+            "node": "Callback Supabase",
+            "branch": 0,
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}
